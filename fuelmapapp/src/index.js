@@ -2,12 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import MapPage from './Pages/MapPage'
 import reportWebVitals from './reportWebVitals';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
-    <App />
+    <React.StrictMode>
+        <BrowserRouter>
+        
+            <App />
+            <Routes>
+            <Route path="testing" element={<MapPage/> }/>
+            </Routes>
+        </BrowserRouter>
   </React.StrictMode>
 );
 
