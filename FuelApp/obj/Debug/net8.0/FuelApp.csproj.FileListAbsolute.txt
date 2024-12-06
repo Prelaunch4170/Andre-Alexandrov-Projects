@@ -32,3 +32,4 @@ F:\Programming projects\Andre-Alexandrov-Projects\FuelApp\obj\Debug\net8.0\ref\F
 F:\Programming projects\Andre-Alexandrov-Projects\FuelApp\bin\Debug\net8.0\dotenv.net.dll
 F:\Programming projects\Andre-Alexandrov-Projects\FuelApp\obj\Debug\net8.0\FuelApp.csproj.AssemblyReference.cache
 F:\Programming projects\Andre-Alexandrov-Projects\FuelApp\obj\Debug\net8.0\FuelApp.csproj.Up2Date
+F:\Programming projects\Andre-Alexandrov-Projects\FuelApp\bin\Debug\net8.0\Newtonsoft.Json.dll

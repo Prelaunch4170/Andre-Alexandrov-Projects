@@ -1,12 +1,22 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Diagnostics;
+using FuelApp.Models;
 
 namespace FuelApp.Controllers
 {
     public class DataController : Controller
     {
         private readonly HttpClient _httpClient;
+        static Dictionary<int, string> Fuels = new Dictionary<int, string> { { 2, "Unleaded" }, { 3, "Diesel" }, { 4, "LPG" }, 
+            { 5, "Premium Unleaded 95" }, { 6, "ULSD" }, { 8, "Premium Unleaded 98" }, { 11, "LRP" }, { 12, "e10" }, { 13, "Premium e5" }, 
+            { 14, "Premium Diesel" }, { 16, "Bio-Diesel 20" }, { 19, "e85" }, { 21, "OPAL" }, { 22, "Compressed natural gas" }, 
+            { 23, "Liquefied natural gas" }, { 999, "e10/Unleaded" }, { 1000, "Diesel/Premium Diesel" } };
 
         public DataController(HttpClient httpClient)
         {
@@ -19,24 +29,59 @@ namespace FuelApp.Controllers
         public async Task<IActionResult> GetFuelData()
         {
             // URL of the external API
-            var url = "https://fppdirectapi-prod.safuelpricinginformation.com.au/Price/GetSitesPrices?countryId=21&geoRegionLevel=3&geoRegionId=4";
+            var FUEL_PRICE = "https://fppdirectapi-prod.safuelpricinginformation.com.au/Price/GetSitesPrices?countryId=21&geoRegionLevel=3&geoRegionId=4";
+            var SITES = "https://fppdirectapi-prod.safuelpricinginformation.com.au/Subscriber/GetFullSiteDetails?countryId=21&geoRegionLevel=3&geoRegionId=4";
 
-            // Set up the header with the API Key (replace "YOUR_API_KEY" with your actual key)
+            
             _httpClient.DefaultRequestHeaders.Clear();
-            var FUEL_KEY = Environment.GetEnvironmentVariable("FUEL_KEY");
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"FPDAPI SubscriberToken={FUEL_KEY}");
+            
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"FPDAPI SubscriberToken={Environment.GetEnvironmentVariable("FUEL_KEY")}");
 
             // Make the API request
-            var response = await _httpClient.GetAsync(url);
-
+            var responsePrice = await _httpClient.GetAsync(FUEL_PRICE);
+            var responseLoc = await _httpClient.GetAsync(SITES);
             // Check if the response is successful
-            if (response.IsSuccessStatusCode)
+            if (responsePrice.IsSuccessStatusCode && responseLoc.IsSuccessStatusCode)
             {
                 // Read and deserialize the response data
-                var data = await response.Content.ReadAsStringAsync();
+                var dataPrice = await responsePrice.Content.ReadAsStringAsync();
+                var dataLoc = await responseLoc.Content.ReadAsStringAsync();
 
-                // Here, you can parse the JSON response and pass it to the view or model
-                // Assuming the data is in JSON format, you might deserialize it into a model object
+
+                JObject locations = JObject.Parse(dataLoc);
+                JArray locationsArray = (JArray)locations["S"];
+                JObject prices = JObject.Parse(dataPrice);
+                JArray priceArray = (JArray)prices["SitePrices"];
+
+                
+                List<Location> locationsDetails = new List<Location>();
+                foreach (var location in locationsArray)
+                {
+                   //initilise the location and create empty dictionary to be replaced later
+                    Location loc = new Location
+                    {
+                        locationID = location["S"].Value<int>(),
+                        locationName = location["N"].ToString(),
+                        lat = location["Lat"].Value<double>(),
+                        lng = location["Lng"].Value<double>(),
+                        FuelPrices = new Dictionary<string, double>()
+                    };
+                    Dictionary<string, double> locPrices = new Dictionary<string, double>();
+                    foreach(var price in priceArray)// get the fuels for a location and add it to a dictionary to then replace the on in loc
+                    {
+                        if (price["SiteId"].Value<int>() == loc.locationID)
+                        {
+                            var fuel = price["FuelId"].Value<int>();
+                            locPrices.Add(Fuels[fuel], price["Price"].Value<double>());
+                        }
+                    }
+                    loc.FuelPrices = locPrices;
+                    locationsDetails.Add(loc);
+                }
+
+                var data = new[] { locationsDetails };
+
+
                 return Json( data); // You can pass 'data' to the view or deserialize it into a model
             }
             else
