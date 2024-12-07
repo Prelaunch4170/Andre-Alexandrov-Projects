@@ -79,7 +79,7 @@ namespace FuelApp.Controllers
                     locationsDetails.Add(loc);
                 }
 
-                var data = new[] { locationsDetails };
+                var data =  locationsDetails;
 
 
                 return Json( data); // You can pass 'data' to the view or deserialize it into a model

@@ -11,6 +11,14 @@ var app = builder.Build();
 DotEnv.Load();
 
 
+app.UseCors(b =>
+{
+    b.AllowAnyMethod();
+    b.AllowAnyOrigin();
+    b.AllowAnyHeader();
+});
+
+
 var FUEL_KEY = Environment.GetEnvironmentVariable("FUEL_KEY");
 var MAP_KEY = Environment.GetEnvironmentVariable("MAP_KEY");
 
